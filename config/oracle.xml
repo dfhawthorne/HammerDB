@@ -4,6 +4,7 @@
         <system_user>system</system_user>
         <system_password>manager</system_password>
         <instance>oracle</instance>
+        <system_instance>none</system_instance>
         <rac>0</rac>
     </connection>
     <tpcc>
