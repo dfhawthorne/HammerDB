@@ -13,23 +13,23 @@
 	    <num_vu>1</num_vu>
             <tpcc_user>tpcc</tpcc_user>
             <tpcc_pass>tpcc</tpcc_pass>
-            <tpcc_def_tab>tpcctab</tpcc_def_tab>
-            <tpcc_ol_tab>tpcctab</tpcc_ol_tab>
+            <tpcc_def_tab>users</tpcc_def_tab>
+            <tpcc_ol_tab>users</tpcc_ol_tab>
             <tpcc_def_temp>temp</tpcc_def_temp>
 	    <partition>false</partition>
 	    <hash_clusters>false</hash_clusters>
 	    <tpcc_tt_compat>false</tpcc_tt_compat>
         </schema>
         <driver>
-            <total_iterations>1000000</total_iterations>
+            <total_iterations>10000000</total_iterations>
             <raiseerror>false</raiseerror>
             <keyandthink>false</keyandthink>
 	    <checkpoint>false</checkpoint>
-            <ora_driver>test</ora_driver>
+            <ora_driver>timed</ora_driver>
             <rampup>2</rampup>
             <duration>5</duration>
             <allwarehouse>false</allwarehouse>
-            <timeprofile>false</timeprofile>
+            <ora_timeprofile>false</ora_timeprofile>
 	    <async_scale>false</async_scale>
 	    <async_client>10</async_client>
 	    <async_verbose>false</async_verbose>
@@ -42,7 +42,7 @@
             <scale_fact>1</scale_fact>
             <tpch_user>tpch</tpch_user>
             <tpch_pass>tpch</tpch_pass>
-            <tpch_def_tab>tpchtab</tpch_def_tab>
+            <tpch_def_tab>users</tpch_def_tab>
             <tpch_def_temp>temp</tpch_def_temp>
             <num_tpch_threads>1</num_tpch_threads>
 	    <tpch_tt_compat>false</tpch_tt_compat>

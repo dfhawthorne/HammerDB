@@ -3,6 +3,7 @@
     <connection>
         <pg_host>localhost</pg_host>
         <pg_port>5432</pg_port>
+        <pg_sslmode>prefer</pg_sslmode>
     </connection>
 	<tpcc>
         <schema>
@@ -18,14 +19,15 @@
             <pg_vacuum>false</pg_vacuum>
             <pg_dritasnap>false</pg_dritasnap>
             <pg_oracompat>false</pg_oracompat>
+            <pg_cituscompat>false</pg_cituscompat>
             <pg_storedprocs>false</pg_storedprocs>
             <pg_partition>false</pg_partition>
         </schema>
         <driver>
-            <pg_total_iterations>1000000</pg_total_iterations>
+            <pg_total_iterations>10000000</pg_total_iterations>
             <pg_raiseerror>false</pg_raiseerror>
             <pg_keyandthink>false</pg_keyandthink>
-            <pg_driver>test</pg_driver>
+            <pg_driver>timed</pg_driver>
 	    <pg_rampup>2</pg_rampup>
             <pg_duration>5</pg_duration>
             <pg_allwarehouse>false</pg_allwarehouse>

@@ -36,7 +36,7 @@ Version 1.04 August 2003
 
 Bug Fixes
 
-[ 791801 ] doublequoted SQL not escaped when parsed
+[ 791801 ] double quoted SQL not escaped when parsed
 [ 791802 ] bind variable incorrectly parsed
 [ 791808 ] Startup error if run from different directory
 
@@ -90,7 +90,7 @@ Added networking functionality and operating modes as a base for remote distribu
 
 Added Master Distribution functionality to distribute files between clients.
 
-Tablelist package incorporated into code to reduce external pacakage requirements
+Tablelist package incorporated into code to reduce external package requirements
 
 Tested with TCL 8.4.5 and TK 8.4.5
 
@@ -459,7 +459,7 @@ Changed "Number of Threads" to "Virtual Users to Build Schema" in Schema builds 
 
 Added Number of Virtual Users to result of TPC-C timed driver workloads 
 
-Mulithreaded and tuned Oracle TPC-H Schema build
+Multithreaded and tuned Oracle TPC-H Schema build
 
 Added NLS Settings to TPC-H build and driver scripts
 
@@ -487,7 +487,7 @@ tcl8.5.9, tk8.5.9, thread2.6.6, oratcl4.5, mysqltcl3.05 tclodbc2.5.1
 
 for Linux x86 and x86-64 and Windows x86 and x86-64
 
-Significant performance and scalability improvements with Windows binaries to eqivalence of Linux platform
+Significant performance and scalability improvements with Windows binaries to equivalence of Linux platform
 
 Bug Fixes
 
@@ -589,7 +589,7 @@ Changed Application name from Hammerora to HammerDB
 
 Updated Splash Screen with new HammerDB logo to reflect name change
 
-Added HammerDB icon to be displayed when minmised and in corner of Windows version
+Added HammerDB icon to be displayed when minimised and in corner of Windows version
 
 Added support for TimesTen database with TPC-C workload
 
@@ -729,7 +729,7 @@ Version 2.21 Nov 2016
 
 Bug fixes 
 
-[#109] Exit on Oracle Errror not applied when set in config.xml
+[#109] Exit on Oracle Error not applied when set in config.xml
 [#110] Running autopilot from master only kills virtual users in local instance
 [#111] Oracle AWR Driver script reports double TPM when running against RAC
 [#112] Metrics: too many nested evaluations (infinite loop?) 
@@ -760,7 +760,7 @@ Removed mssqls_schema XML config parameter
 
 Added mssqls_linux_server,mssqls_linux_athent,mssqls_linux_odbc to configuration for Linux default
 
-Deprecated original SQL Server TPC-C schema as imcompatible with bulk load 
+Deprecated original SQL Server TPC-C schema as incompatible with bulk load 
 
 Thomas Kejser SQL Server TPC-C schema set as default for all platforms
 
@@ -805,7 +805,7 @@ Version 3.0 Apr 2018
 Bug fixes 
 
 [#114] 	Metrics connection is lost on Windows server
-[#115] 	wrong # args error when selecting Times Ten compatability in Oracle
+[#115] 	wrong # args error when selecting Times Ten compatibility in Oracle
 [#116] 	Incorrect time displayed in long running autopilot
 [#117] 	Only Basic Fonts used on Linux
 [#118] 	Oracle Hash Clusters schema does not build when warehouses not divisible by 100
@@ -934,3 +934,196 @@ Fix distribution of Warehouse across VUs for All Warehouse option. (#82)
 Consider changing "Benchmark Options" from TPC-C or TPC-H to something that
 underscores "based on TPC-C/TPC-H" (#46)
 GUI HD Display (#19)
+
+---------------------------------------------------------------------
+
+Version 4.1 April 2021
+
+Pull Requests & Issues
+
+Update ora_timeprofile variable for runstep compatibility (#228)
+Extended Time Profiling as per Issue #224 (#225)
+Fix for Issue #216 Unkown prepared statement handler with connect pool (#217)
+Add TX Counter to CLI and TX Counter logging (#215) 
+Adds feature enable Variable Load/Stress Testing enhancement workload (#211) 
+Fix for Issue #194 Postgres datatype change from number to integer (#204) 
+Swap column order in stock index in pgoltp.tcl (#193)
+Proposed solution to #189 - Wrong AWR Snapshots listed (#190)
+Update PostgreSQL Data Types and Hash Partition for Issue #187 (#188) 
+Add limit clause to TPC-H Oracle queries (#186) 
+Proposed fix to Issue #184 (#185) 
+Update CLI runtimer to asynchronous (#180) 
+Add task manager module (#178) 
+Add bgerror to CLI (#177) 
+Add indexes to PostgreSQL Foreign Keys (#170) 
+Fix distributescript applyctexthighlight error (#169)
+
+---------------------------------------------------------------------
+
+Version 4.2 June 2021
+
+Pull Requests & Issues
+
+Xtprof timer can retain old data #253 (#254)
+Update to increase TPROC-C Schema Size Limits for Issue #250 (#251)
+Fix for Timing Data Times Out (#248)
+Fix for Issue #242 can't read tc_flog no such variable #242 (#243)
+Add MariaDB as a separate database #54 (#234)
+
+---------------------------------------------------------------------
+
+Version 4.3 Nov 2021
+
+Pull Requests & Issues
+
+v4.3 fix - encapsulate graphical metrics in namespace #283
+Add performance metrics for PostgreSQL #279 (#8)
+Add CLI to Web Service with SQLite repository for output, timing and transactions #278 (#145)
+Update for #264 [TPROC-H] MySQL create FKs after table load #274 (#264)
+Add sslmode support for PostgreSQL database #271
+
+---------------------------------------------------------------------
+
+Version 4.4 Feb 2022
+
+Pull Requests & Issues
+
+Fix getcols can return zero, resulting in divide-by-zero #306
+readline: only catch signals when using interact #303
+Add optional Citus support #302
+Build dataset using COPY instead of multi-row inserts for TPROC-C #301
+Make Linux hammerdb executable work with spaces in PATH #298
+Optimize MakeAlphaString #295
+Standardize indentation of tcl files #292
+
+---------------------------------------------------------------------
+
+Version 4.5 Jul 2022
+
+Pull Requests & Issues
+
+Add SSL options to MySQL #376 
+Fix for o_all_local value update and insert #375 (#374)
+SQL Server Schema/Stored Procedure Updates #372 (#371)
+Fix RAISEEROR error in Asynch connect #366 (#365)
+use correct transaction boundaries in MySQL / MariaDB and PG #356
+Dependency build automation for Windows #362 (#37)
+Escape username and database name in PostgreSQL procedures #340
+Added Dockerfile to build a HammerDB container and TPROC_C sample scripts to
+build schema and run tests #339 (#107)
+Save/load configuration to SQLite DB #336 (#3)
+set MariaDB autocommit to 1 for Monitor VU #333
+Move history file tracking to interactive #332 (#320)
+Add SSL connection options to MariaDB #331
+Dependency build automation for Linux #323 (#36)
+
+
+---------------------------------------------------------------------
+
+Version 4.6 Nov 2022
+
+Pull Requests & Issues
+
+Job Storage #453 (#420)
+Add Alternative python CLI interface #452
+Fix for issue #451 (#450)
+Fix for keepalive issue #446 (#445)
+Improve CLI diset error message #437
+Add drop schema functionality #430
+Fix MySQL/MariaDB TX Count Error Handling on Connection #419
+Deprecate CLI runtimer #415
+Add set virtual user to available cpus #409
+Passwordless MariaDB connection #408
+Allow to skip CA for MariaDB #407
+Add SQL Server encrypt connection and trust certificate #406
+Remove reconnect for PostgreSQL on windows #402
+Hdb docker #401
+fix typos #388
+
+---------------------------------------------------------------------
+
+Version 4.7 Feb 2023
+
+Pull Requests & Issues
+
+Jobs query for VU specific timing prints data twice, with second always in text #515 (#514)
+HammerDB 4.7 fails to start on Windows if 4.6 SQLite files present #513 (#512)
+Add Windows powershell driver script to sample scripts #511 (#510)
+Fix calculation of geomean in TPROC-H #504
+Fix TPROC-H query 5 for Columnstore #503
+Use db2tcl to create and drop database for DB2 #501 (#431)
+Improve Transaction counter look and feel and resize when window resized #494 (#487)
+remove trafodion configuration and files #485 (#484)
+MySQL Heatwave TPROC-H support #483 (#482)
+Query update for tpch columnstore benchmark #481 (#480)
+Add tkpath to build #478
+Prevent CLI hang when scripts finishes before enters event loop #473 (#472)
+Updates to jobs for Docker scripts #471
+Fix for Issue #467 CLI myerrproc and remote_command opmode #468 (#467)
+Update omitted Changelog for v4.6 release #466
+Fixing queries for Columnstore issue 459 #460 (#459)
+Make jobs functionality modular #458
+
+---------------------------------------------------------------------
+
+Version 4.8 Jun 2023
+
+Pull Requests & Issues
+
+Fix typo in Web Service port label #567
+Add password blank to GUI #566
+Fix commit 3de91e5 removed getchart help message #565
+Fix User and Repeat delay reversed #564
+Update Documentation to v4.8 #562
+Allow using existing empty database for Db2 TPROC-C and TPROC-H #560 (#548)
+Enhancement for storing and retrieval of HammerDB results and configurations #558 (#352)
+MySQL/MariaDB L_ORDERKEY to BIGINT #556 (#551)
+Update mssqlsoltp.tcl #541 (#538)
+Auto scale factor for TPC-H (issue 23) #539 (#23)
+Fix doc bug for VU/warehouse count #535 (#534)
+Repair ora_compatible OSTAT procedure #531
+Add jobs getchart command #530
+Add CLI savescript and custommonitor commands #522 (#521)
+Create CONTRIBUTING.md #517
+
+---------------------------------------------------------------------
+
+Version 4.9 Oct 2023
+
+Pull Requests & Issues
+
+Network Error When Loading Data #619 (#618)
+Remove Unneeded Indices From TPROC-H MSSQL #616
+TPROCC MSSQLS BCP Load by Warehouse #614
+Alter MSSQL TPCH Colstore Index Steps #613
+Implement BCP Option for MSSQLS TPCH Load build database #611 (#593)
+Fix for TPROC-H calculates o_totalprice incorrectly #610 (#609)
+Add MariaDB/MySQL No Stored Procedures option to TPROC-C #602 (#600)
+Fix MySQL/MariaDB TPROC-H build FK error #599 (#598)
+Edited Dockerfile to install a specific version of msodbcsql18 #596 (#595)
+Added use_bcp default as true and enabled bcp with windows authentication #592 (#589)
+Skip blank lines in binds in recent Oracle trace files #591 (#590)
+Added Use bcp as a user option #587 (#584)
+Add Optional Invisible Primary Key to History for Replication in MySQL and MariaDB #586 (#580)
+Update precision of w_ytd to prevent numeric field overflow #585 (#577)
+Container file simplication #569
+
+---------------------------------------------------------------------
+
+Version 4.10 Feb 2024
+
+Pull Requests & Issues
+
+Increase default CLI timeouts #668 (#667)
+Add support for Microsoft Entra authentication for SQL Server #665 (#662)
+Add schema and consistency checks for all databases for TPROC-C and TPROC-H #664 (#659)
+Add quotemeta function to escape special characters in passwords #658 (#561,#606)
+Add bcp -u option for SQL Server to trust the server certificate #653 (#651)
+MSSQL TPCH Create Advanced Statistics #652
+MSSQLS TPCH Add Flag to Partition Orders and Lineitems #647
+Add giset command to set generic dictionary settings #646 (#645)
+Add check to vurun for pre-existing threads #644 (#643)
+Add optional purge and write back for MariaDB TPROC-C database #642 (#640)
+Docker cloudtk docker gui #641 (#631)
+Fix call ash_fetch,error on Windows client running PostgreSQL metrics #638 (#637)
+Alter MSSQLS TPCH Schema to use Decimal not Money #634

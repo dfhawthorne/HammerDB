@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <hammerdb>
    <theme>
-         <scaling>auto</scaling>
-	 <scaletheme>auto</scaletheme>
-	 <pixelsperpoint>auto</pixelsperpoint>
+        <scaling>auto</scaling>
+        <scaletheme>auto</scaletheme>
+        <pixelsperpoint>auto</pixelsperpoint>
    </theme>
+   <sqlitedb>
+        <sqlitedb_dir>TMP</sqlitedb_dir>
+   </sqlitedb>
    <code_highlight>
 	<highlight>true</highlight>
+	<quote_passwords>true</quote_passwords>
    </code_highlight>
    <benchmark>
 	<rdbms>Oracle</rdbms>
@@ -37,7 +41,11 @@
     </mode>
     <transaction_counter>
 	<settings>
-            <refresh_rate>10</refresh_rate>
+            <tc_refresh_rate>10</tc_refresh_rate>
+            <tc_log_to_temp>0</tc_log_to_temp>
+	    <tc_unique_log_name>0</tc_unique_log_name>
+	    <tc_log_timestamps>0</tc_log_timestamps>
+	    <tc_graph_ribbon>false</tc_graph_ribbon>
 	</settings>
     </transaction_counter>
     <metrics>
@@ -53,8 +61,19 @@
             <gen_directory>
 	    </gen_directory>
     </datageneration>
+    <commandline>
+	<sqlite_db>TMP</sqlite_db> 
+        <keepalive_margin>60</keepalive_margin>
+        <jobsoutput>JSON</jobsoutput>
+        <jobs_disable>0</jobs_disable>
+    </commandline>
     <webservice>
 	   <ws_port>8080</ws_port> 
-	   <sqlite_db>:memory:</sqlite_db> 
     </webservice>
+    <timeprofile>
+           <profiler>xtprof</profiler>
+           <xt_unique_log_name>0</xt_unique_log_name>
+           <xt_gather_timeout>60</xt_gather_timeout>
+           <xt_job_storage>1</xt_job_storage>
+    </timeprofile>
 </hammerdb>
