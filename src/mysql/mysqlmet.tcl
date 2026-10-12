@@ -1545,7 +1545,6 @@ namespace eval mysqlmet {
                     { #FFD700 gold }
                     { #E46800 orange }
                     { #4080F0 light_blue }
-                    { #004AE7 blue }
                     { #00FF00 bright_green }
                     { #00CC00 green }
                     { #FFFFFF black }
@@ -1957,23 +1956,37 @@ namespace eval mysqlmet {
     }
 
     proc connect_to_mysql {} {
-        global public masterthread dbmon_threadID bm mysql_ssl_options
-        upvar #0 configmysql configmysql
-        setlocaltcountvars $configmysql 1
-        if ![ info exists mysql_ssl_options ] { check_mysql_ssl $configmysql }
+        global public masterthread dbmon_threadID bm rdbms
+        # Provider-aware: resolve the config dict (configmysql / configvillagesql)
+        # and variable prefix (mysql / vsql) from the active $rdbms, so Database
+        # Metrics for a MySQL-compatible fork (e.g. VillageSQL) connects with that
+        # provider's settings instead of MySQL's. Falls back to MySQL when $rdbms
+        # is unset or unknown, so the stock MySQL path is unchanged.
+        set cfgname "configmysql"
+        set p "mysql"
+        if { [ info exists rdbms ] && $rdbms ne "" } {
+            set fc [ find_config $rdbms ]
+            set fp [ find_prefix $rdbms ]
+            if { $fc ne "" } { set cfgname $fc }
+            if { $fp ne "" } { set p $fp }
+        }
+        upvar #0 $cfgname config
+        global ${p}_ssl_options
+        setlocaltcountvars $config 1
+        if ![ info exists ${p}_ssl_options ] { check_${p}_ssl $config }
         set public(connected) 0
-        set public(host) $mysql_host
-        set public(port) $mysql_port
-        set public(socket) $mysql_socket
-        set public(ssl_options) $mysql_ssl_options
+        set public(host)        [ set ${p}_host ]
+        set public(port)        [ set ${p}_port ]
+        set public(socket)      [ set ${p}_socket ]
+        set public(ssl_options) [ set ${p}_ssl_options ]
         if { $bm eq "TPC-C" } {
-            set public(user) $mysql_user
-            set public(user_pw) [ quotemeta $mysql_pass ]
-            set public(tproc_db) $mysql_dbase
+            set public(user)     [ set ${p}_user ]
+            set public(user_pw)  [ quotemeta [ set ${p}_pass ] ]
+            set public(tproc_db) [ set ${p}_dbase ]
         } else {
-            set public(user) $mysql_tpch_user
-            set public(user_pw) [ quotemeta $mysql_tpch_pass ]
-            set public(tproc_db) $mysql_tpch_dbase
+            set public(user)     [ set ${p}_tpch_user ]
+            set public(user_pw)  [ quotemeta [ set ${p}_tpch_pass ] ]
+            set public(tproc_db) [ set ${p}_tpch_dbase ]
         }
 
         if { ! [ info exists dbmon_threadID ] } {
@@ -2098,7 +2111,7 @@ namespace eval mysqlmet {
                                   s.DIGEST
                                 FROM performance_schema.threads t
                                 LEFT JOIN performance_schema.events_waits_current w
-                                  ON t.THREAD_ID = w.THREAD_ID AND w.EVENT_NAME != 'idle'
+                                  ON t.THREAD_ID = w.THREAD_ID AND w.EVENT_NAME != 'idle' AND w.END_EVENT_ID IS NULL
                                 LEFT JOIN performance_schema.events_statements_current s
                                   ON t.THREAD_ID = s.THREAD_ID
                                 WHERE t.TYPE = 'FOREGROUND'

@@ -1288,6 +1288,19 @@ proc gettimestamp { } {
 # bcp command to copy from file to specified tables
 # -b flag specifies batch size of 500000, -a flag specifies network packet size of 16000
 # network packet size depends on server configuration, default of 4096 is used if 16000 is not allowed
+proc bcpWindowsTrustServerCertificate { trust_cert } {
+    if {!$trust_cert} {
+        return 0
+    }
+    if {![info exists ::mssqls_bcp_supports_u]} {
+        set bcp_usage ""
+        catch {exec bcp 2>@1} bcp_usage
+        set ::mssqls_bcp_supports_u \
+            [regexp -- {\[-u[[:space:]]} $bcp_usage]
+    }
+    return $::mssqls_bcp_supports_u
+}
+
 proc bcpComm {odbc tableName filePath uid pwd server} {
     upvar 3 location location
     upvar 3 authentication authentication
@@ -1297,25 +1310,40 @@ proc bcpComm {odbc tableName filePath uid pwd server} {
     }
     } else {
     if {[ string toupper $authentication ] eq "WINDOWS" } {
-        exec bcp $tableName IN $filePath -b 500000 -a 16000 -T -S $server -c  -t ","
+        upvar #0 tcl_platform tcl_platform
+        upvar 3 trust_cert trust_cert
+        if {$tcl_platform(platform) == "windows" && [bcpWindowsTrustServerCertificate $trust_cert]} {
+            exec bcp $tableName IN $filePath -b 500000 -a 16000 -T -S $server -u -c -t ","
+        } else {
+            exec bcp $tableName IN $filePath -b 500000 -a 16000 -T -S $server -c -t ","
+        }
     } else {
     upvar #0 tcl_platform tcl_platform
-   if {$tcl_platform(platform) == "windows"} {
-#bcp on Windows uses ODBC driver 17 that does not support the -u option and may need updating when bcp driver changes
-   if {[ string toupper $authentication ] eq "ENTRA" } {
-        exec bcp $tableName IN $filePath -b 500000 -a 16000 -G -S $server -c  -t ","
+    if {$tcl_platform(platform) == "windows"} {
+        upvar 3 trust_cert trust_cert
+        set bcp_trust_cert [bcpWindowsTrustServerCertificate $trust_cert]
+        if {[ string toupper $authentication ] eq "ENTRA" } {
+            if {$bcp_trust_cert} {
+                exec bcp $tableName IN $filePath -b 500000 -a 16000 -G -S $server -u -c -t ","
+            } else {
+                exec bcp $tableName IN $filePath -b 500000 -a 16000 -G -S $server -c -t ","
+            }
         } else {
-        exec bcp $tableName IN $filePath -b 500000 -a 16000 -U $uid -P $pwd -S $server -c  -t ","
-	}
-	} else {
+            if {$bcp_trust_cert} {
+                exec bcp $tableName IN $filePath -b 500000 -a 16000 -U $uid -P $pwd -S $server -u -c -t ","
+            } else {
+                exec bcp $tableName IN $filePath -b 500000 -a 16000 -U $uid -P $pwd -S $server -c -t ","
+            }
+        }
+    } else {
 #bcp on Linux can use ODBC driver 18 and trust the server certificate with -u option
     upvar 3 trust_cert trust_cert
     upvar 3 odbc_driver odbc_driver
-    regexp {ODBC\ Driver\ ([0-9]+)\ for\ SQL\ Server} $odbc_driver all odbc_version 
+    regexp {ODBC\ Driver\ ([0-9]+)\ for\ SQL\ Server} $odbc_driver all odbc_version
     if { $trust_cert && $odbc_version >= 18 } {
-        exec bcp $tableName IN $filePath -b 500000 -a 16000 -U $uid -P $pwd -S $server -u -c  -t ","
-		} else {
-        exec bcp $tableName IN $filePath -b 500000 -a 16000 -U $uid -P $pwd -S $server -c  -t ","
+        exec bcp $tableName IN $filePath -b 500000 -a 16000 -U $uid -P $pwd -S $server -u -c -t ","
+            } else {
+        exec bcp $tableName IN $filePath -b 500000 -a 16000 -U $uid -P $pwd -S $server -c -t ","
            }
          }
       }
@@ -1931,6 +1959,7 @@ proc do_tpcc { server port odbc_driver authentication uid pwd tcp azure count_wa
         set num_vu 1
     }
     if { $threaded eq "SINGLE-THREADED" ||  $threaded eq "MULTI-THREADED" && $myposition eq 1 } {
+        try {
         puts "CREATING [ string toupper $db ] SCHEMA"
         if [catch {tdbc::odbc::connection create odbc $connection} message ] {
             error "Connection to $connection could not be established : $message"
@@ -1942,41 +1971,21 @@ proc do_tpcc { server port odbc_driver authentication uid pwd tcp azure count_wa
         if { $threaded eq "MULTI-THREADED" } {
             tsv::set application load "READY"
             LoadItems odbc $MAXITEMS
-            puts "Monitoring Workers..."
-            set prevactive 0
-            while 1 {
-                set idlcnt 0; set lvcnt 0; set dncnt 0;
-                for {set th 2} {$th <= $totalvirtualusers } {incr th} {
-                    switch [tsv::lindex common thrdlst $th] {
-                        idle { incr idlcnt }
-                        active { incr lvcnt }
-                        done { incr dncnt }
-                    }
-                }
-                if { $lvcnt != $prevactive } {
-                    puts "Workers: $lvcnt Active $dncnt Done"
-                }
-                set prevactive $lvcnt
-                if { $dncnt eq [expr  $totalvirtualusers - 1] } { break }
-                after 10000
-            }} else {
+            if {[loader_monitor $totalvirtualusers] eq "ABORT"} { return }} else {
             LoadItems odbc $MAXITEMS
-    }}
+    }
+        } on error {message options} {
+            if { $threaded eq "MULTI-THREADED" } {
+                tsv::set application load "ERROR"
+            }
+            return -options $options $message
+        }
+}
     if { $threaded eq "SINGLE-THREADED" ||  $threaded eq "MULTI-THREADED" && $myposition != 1 } {
+        try {
         if { $threaded eq "MULTI-THREADED" } {
             puts "Waiting for Monitor Thread..."
-            set mtcnt 0
-            while 1 {
-                if { [ tsv::exists application load ] } {
-                    incr mtcnt
-                    if {  [ tsv::get application load ] eq "READY" } { break }
-                    if { $mtcnt eq 48 } {
-                        puts "Monitor failed to notify ready state"
-                        return
-                    }
-                }
-                after 5000
-            }
+            if {[loader_wait_ready 48 5000] eq "ABORT"} { return }
             if [catch {tdbc::odbc::connection create odbc $connection} message ] {
                 error "Connection to $connection could not be established : $message"
             } else {
@@ -1985,7 +1994,7 @@ proc do_tpcc { server port odbc_driver authentication uid pwd tcp azure count_wa
             } 
             set remb [ lassign [ findchunk $num_vu $count_ware $myposition ] chunk mystart myend ]
             puts "Loading $chunk Warehouses start:$mystart end:$myend"
-            tsv::lreplace common thrdlst $myposition $myposition active
+            loader_set_state $myposition active
         } else {
             set mystart 1
             set myend $count_ware
@@ -1997,9 +2006,16 @@ proc do_tpcc { server port odbc_driver authentication uid pwd tcp azure count_wa
         LoadOrd odbc $mystart $myend $MAXITEMS $ORD_PER_DIST $DIST_PER_WARE $use_bcp
         puts "End:[ clock format [ clock seconds ] ]"
         if { $threaded eq "MULTI-THREADED" } {
-            tsv::lreplace common thrdlst $myposition $myposition done
+            loader_set_state $myposition done
         }
-    }
+    
+        } on error {message options} {
+            if { $threaded eq "MULTI-THREADED" } {
+                loader_set_state $myposition error
+            }
+            return -options $options $message
+        }
+}
     if { $threaded eq "SINGLE-THREADED" || $threaded eq "MULTI-THREADED" && $myposition eq 1 } {
         CreateIndexes odbc $imdb 
         CreateStoredProcs odbc $imdb 

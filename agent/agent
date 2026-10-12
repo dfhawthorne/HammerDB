@@ -55,11 +55,11 @@ set UserDefaultDir [ file dirname [ info script ] ]
 lappend auto_path "[zipfs root]app/lib"
 package require comm
 namespace import comm::*
-#Enable report for more than 122 CPUs
-interp recursionlimit {} 3000
+#Allow metrics reporting on very high CPU-count systems
+interp recursionlimit {} 10000
 global agentlist S iswin
 set iswin "false"
-set version 6.0
+set version 6.1
 
 if {$tcl_platform(platform) == "windows"} { 
 	package require twapi 
@@ -470,7 +470,7 @@ set connectestablished 1
 }
 Agent hook lost {
 global agentlist S connectestablished restart
-set todel [ lsearch $agentlist $id ]
+set todel [ lsearch -exact $agentlist $id ]
 if { $todel != -1 } {
 puts "Connection to display $id lost: $reason"
 unset -nocomplain connectestablished
@@ -634,6 +634,8 @@ proc CollectIOMetricsLinux {} {
         if {[llength $fields] < 14} { continue }
         set dev [lindex $fields 2]
         if {[regexp {^(loop|ram|fd|sr|dm-|md)} $dev]} { continue }
+        # Count only the whole device
+        if {[file exists "/sys/class/block/$dev/partition"]} { continue }
         set reads [expr {$reads + [lindex $fields 3]}]
         set writes [expr {$writes + [lindex $fields 7]}]
         set sectors [expr {$sectors + [lindex $fields 5] + [lindex $fields 9]}]

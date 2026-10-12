@@ -153,7 +153,7 @@ proc load_virtual {}  {
     #Additional thread for Database Metrics initially Oracle only
     #Additional thread for Database Metrics PostgreSQL added
     #Additional thread for Database Metrics MySQL and MariaDB added
-    if { $rdbms eq "Oracle" || $rdbms eq "PostgreSQL" || $rdbms eq "MySQL" || $rdbms eq "MariaDB" } {
+    if { $rdbms eq "Oracle" || $rdbms eq "PostgreSQL" || $rdbms eq "MySQL" || $rdbms eq "MariaDB" || $rdbms eq "VillageSQL" } {
         if { [ info exists dbmon_threadID ] } {
             if { [ thread::exists $dbmon_threadID ] || [ tsv::get application themonitor ] eq "NOWVUSER" } {
                 set idx [ lsearch $thlist $dbmon_threadID ]
@@ -210,8 +210,9 @@ proc load_virtual {}  {
             } 
         }
     }
-    ed_stop_vuser 
+    ed_stop_vuser
     tsv::set application abort 0
+    if { $rdbms eq "PostgreSQL" } { tsv::set application vacuum_running 0 }
     if {  [ info exists virtual_users ] } { ; } else { set virtual_users 1 }
     if {  [ info exists maxvuser ] } { ; } else { set maxvuser $virtual_users }
     if {  [ info exists lprefix ] } { ; } else { set lprefix "load" }
@@ -386,7 +387,7 @@ proc load_virtual {}  {
         if { [ info exists tc_threadID ] } { 
             if { $threadID eq $tc_threadID } { unset -nocomplain tc_threadID }
         }
-        if { ($rdbms eq "Oracle" || $rdbms eq "PostgreSQL" || $rdbms eq "MySQL" || $rdbms eq "MariaDB") && [ info exists dbmon_threadID ] } { 
+        if { ($rdbms eq "Oracle" || $rdbms eq "PostgreSQL" || $rdbms eq "MySQL" || $rdbms eq "MariaDB" || $rdbms eq "VillageSQL") && [ info exists dbmon_threadID ] } {
             if { $threadID eq $dbmon_threadID } { 
                 tsv::set application themonitor "NOWVUSER"
                 unset -nocomplain dbmon_threadID
@@ -536,12 +537,13 @@ proc load_virtual {}  {
 }
 
 proc run_virtual {} {
-    global _ED ed_loadsave argv argv0 argc embed_args threadscreated threadsbytid maxvuser delayms conpause ntimes masterthread totcount table vuser_create_ok
+    global _ED ed_loadsave argv argv0 argc embed_args threadscreated threadsbytid maxvuser delayms conpause ntimes masterthread totcount table vuser_create_ok rdbms
     set Name .ed_mainFrame.buttons.runworld
     $Name configure -state disabled
     disable_enable_options_menu disable
     set vuser_create_ok false
     tsv::set application abort 0
+    if { $rdbms eq "PostgreSQL" } { tsv::set application vacuum_running 0 }
     ed_edit_commit
     set totcount 0
     #Trying to run so check if any script in editor to run

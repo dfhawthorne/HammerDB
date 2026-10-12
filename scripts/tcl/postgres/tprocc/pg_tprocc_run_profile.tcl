@@ -33,12 +33,10 @@ if {$profileid == 1} {
     exit 1
 }
 
-# If PROFILEID > 1 then multirun PROFILE
-if {$profileid > 1} {
-    if {[catch { jobs profileid $profileid } jerr]} {
-        puts "ERROR: jobs profileid failed: $jerr"
-        exit 1
-    }
+# Set PROFILEID for both single runs (0) and profile runs (>1)
+if {[catch { jobs profileid $profileid } jerr]} {
+    puts "ERROR: jobs profileid failed: $jerr"
+    exit 1
 }
 
 set uaw 0
@@ -98,9 +96,19 @@ if {$profileid == 0} {
 }
 
 # --- Profile run (PROFILEID > 1) ---
-set end_vu  [ expr { [ numberOfCPUs ] + 8 } ]
+set cpus [ numberOfCPUs ]
+if {$cpus <= 64} {
+    set vu_step 4
+} elseif {$cpus <= 128} {
+    set vu_step 8
+} elseif {$cpus <= 256} {
+    set vu_step 16
+} else {
+    set vu_step 24
+}
+set end_vu [ expr { $cpus + $vu_step } ]
 set vu_list {1}
-for {set z 4} {$z <= $end_vu} {incr z 4} { lappend vu_list $z }
+for {set z $vu_step} {$z <= $end_vu} {incr z $vu_step} { lappend vu_list $z }
 
     metstart
     tcstart

@@ -101,7 +101,21 @@ proc metstart {} {
                 return
 		}
     		}
+                set ::metrics_start_ready 0
                 after 500 {climetrics}
+                set metrics_start_timeout [after 60000 {
+                    if {[info exists ::metrics_start_ready] && $::metrics_start_ready == 0} {
+                        set ::metrics_start_ready -1
+                    }
+                }]
+                vwait ::metrics_start_ready
+                after cancel $metrics_start_timeout
+                if {$::metrics_start_ready < 0} {
+                    putscli "CPU metrics failed to start on [ info hostname ]"
+                    catch { DisplayMetrics destroy }
+                    catch { interp delete metrics_interp }
+                    return
+                }
 }}
 
 proc metstatus {} {
@@ -136,18 +150,21 @@ if { $result eq "OK" } {
 	  if { [ interp exists metrics_interp ] } {
 	#A display is already connected so stopping display will close or reinitialize agent
   	putscli "Stopping Metrics Agent and Display on $agent_hostname:$agent_id"
-	#Delay to make sure agent has finished sending
-         after 10000 {
-		 catch {DisplayMetrics destroy}
-		 catch {interp delete metrics_interp}
-	 }
+	#Delay to make sure agent has finished sending before returning
+         after 10000
+	 catch {DisplayMetrics destroy}
+	 catch {interp delete metrics_interp}
   	} else {
 	#A display is not already connected so #set up port to send stop message to agent
     if { [catch {::comm new STOPMetrics -listen 1 -local 0 -silent "TRUE" -port {}} b] } {
     tk_messageBox -message "Stopping Metrics Agent and Display on $agent_hostname:$agent_id failed to create port"
     } else {
         set displayid [ STOPMetrics self ]
-        set displayhost [ info hostname ]
+        if { $agent_hostname eq "localhost" || $agent_hostname eq [ info hostname ] } {
+            set displayhost "127.0.0.1"
+        } else {
+            set displayhost [ info hostname ]
+        }
         #puts "Metric close port open @ $displayid on $displayhost"
 	if { [catch {::comm send -async "$agent_id $agent_hostname" "catch {Agent STOP \"$displayid $displayhost\"} "} b] } {
      putscli "Stopping Metrics Agent and Display on $agent_hostname:$agent_id failed to send message $b"
@@ -184,7 +201,11 @@ proc ConfigureNetworkDisplayCLI {agentid agenthostname} {
         putscli "Creation of Port Failed : $b" 
     } else {
         set displayid [ DisplayMetrics self ]
-        set displayhost [ info hostname ]
+        if { $agenthostname eq "localhost" || $agenthostname eq [ info hostname ] } {
+            set displayhost "127.0.0.1"
+        } else {
+            set displayhost [ info hostname ]
+        }
         putscli "Metric receive port open @ $displayid on $displayhost"
         DisplayMetrics hook lost {
             if { [catch { DisplayMetrics destroy } b] } {
@@ -263,7 +284,13 @@ global agent_hostname jobid discovery_data
 }
 
 proc DoDisplay {maxcpu cpu_model caller} {
-global agent_hostname jobid discovery_data
+global agent_hostname jobid discovery_data metrics_cpucount metrics_start_ready
+	set metrics_cpucount $maxcpu
+        if {[string match "AGENT CONNECTION FAILED*" $cpu_model] || [string match "AGENT BUSY*" $cpu_model]} {
+            set metrics_start_ready -1
+        } else {
+            set metrics_start_ready 1
+        }
 	putscli "Started CPU Metrics for $cpu_model:($maxcpu CPUs)"
 	if { [ info exists cpu_model ] && ![ string match "AGENT CONNECTION FAILED" $cpu_model ] } {
 	#Only insert CPU-only data if DoDiscovery has not already stored system data
@@ -301,7 +328,7 @@ proc addiostats { iops mbps } {
 }
 
 proc StatsOneLine {line} {
-global jobid usrlist syslist irqlist idlelist iopslist mbpslist agent_hostname
+global jobid usrlist syslist irqlist idlelist iopslist mbpslist agent_hostname metrics_cpucount
 proc gmean L {
     expr pow([join $L *],1./[llength $L])
 }
@@ -362,8 +389,8 @@ proc amean L {
         if {$placehold eq ""} {
         #The jobid is not present in the jobsystem table and there is no placeholder
         #Likely metrics are continual running for multiple jobs so find system data from previous job
-        hdbjobs eval {select hostname,cpumodel,cpucount,system_vendor,system_type,os_name,memory,nic,storage,cloud_instance,other_software,extra from JOBSYSTEM where hostname=$agent_hostname LIMIT 1} {
-        hdbjobs eval {INSERT INTO JOBSYSTEM(jobid,hostname,cpumodel,cpucount,system_vendor,system_type,os_name,memory,nic,storage,cloud_instance,other_software,extra) VALUES($jobid,$agent_hostname,$cpumodel,$cpucount,$system_vendor,$system_type,$os_name,$memory,$nic,$storage,$cloud_instance,$other_software,$extra)}}
+        hdbjobs eval {select hostname,cpumodel,system_vendor,system_type,os_name,memory,nic,storage,cloud_instance,other_software,extra from JOBSYSTEM where hostname=$agent_hostname LIMIT 1} {
+        hdbjobs eval {INSERT INTO JOBSYSTEM(jobid,hostname,cpumodel,cpucount,system_vendor,system_type,os_name,memory,nic,storage,cloud_instance,other_software,extra) VALUES($jobid,$agent_hostname,$cpumodel,$metrics_cpucount,$system_vendor,$system_type,$os_name,$memory,$nic,$storage,$cloud_instance,$other_software,$extra)}}
         } else {
         hdbjobs eval {select hostname,cpumodel,cpucount from JOBSYSTEM where JOBID="@@@"} {
         hdbjobs eval {update JOBSYSTEM set jobid = $jobid where JOBID="@@@"}

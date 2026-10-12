@@ -2,8 +2,8 @@
 # maintainer: Pooja Jain
 #
 # Behaviour matches maria_tprocc_run_profile.tcl:
-#   PROFILEID=0   => single run at VUs=vcpu, no jobs profileid
-#   PROFILEID>1   => profile sweep, jobs profileid, VU list: 1 then 4..(cpus+8) step 4
+#   PROFILEID=0   => single run at VUs=vcpu, jobs profileid 0
+#   PROFILEID>1   => profile sweep, jobs profileid, adaptive VU steps based on CPU count
 #   otherwise     => error
 #
 # Output:
@@ -57,12 +57,11 @@ if uaw_env in {"1", "true", "yes", "on"}:
 dbset("db", "maria")
 dbset("bm", "TPC-C")
 
-# Only set jobs profileid when PROFILEID > 1
-if profileid > 1:
-    try:
-        jobs("profileid", str(profileid))
-    except Exception as e:
-        fatal(f"ERROR: jobs profileid failed: {e}")
+# Set jobs profileid for both single runs (0) and profile runs (>1)
+try:
+    jobs("profileid", str(profileid))
+except Exception as e:
+    fatal(f"ERROR: jobs profileid failed: {e}")
 
 giset("commandline", "keepalive_margin", 1200)
 giset("timeprofile", "xt_gather_timeout", 1200)
@@ -109,8 +108,18 @@ if profileid == 0:
     sys.exit(0)
 
 # PROFILEID > 1 => sweep, append jobids
-end_vu = (os.cpu_count() or 1) + 8
-vu_list = [1] + list(range(4, end_vu + 1, 4))
+cpus = int(tclpy.eval('numberOfCPUs'))
+if cpus <= 64:
+    vu_step = 4
+elif cpus <= 128:
+    vu_step = 8
+elif cpus <= 256:
+    vu_step = 16
+else:
+    vu_step = 24
+
+end_vu = cpus + vu_step
+vu_list = [1] + list(range(vu_step, end_vu + 1, vu_step))
 
 metstart()
 tcstart()
